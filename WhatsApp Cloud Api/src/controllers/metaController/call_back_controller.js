@@ -1,0 +1,96 @@
+// import {
+//   exchangeCodeForToken,
+//   getBusinessId,
+//   getWabaId,
+//   getPhoneNumberId,
+// } from "../../services/metaServices/meta_services.js";
+import MetaConnection from "../../model/metaModels/meta_connection.js";
+
+
+
+
+export const completeSignup = async (req, res) => {
+try {
+const {
+waba_id,
+phone_number_id,
+business_id,
+display_phone_number,
+} = req.body;
+console.log("✅ completeSignup payload", req.body);
+
+if (!waba_id || !phone_number_id || !business_id) {
+return res.status(400).json({ error: "Missing required Meta IDs" });
+}
+
+
+const userId = req.user?.id || "demo-user-id"; // replace with real auth
+
+
+const record = await MetaConnection.create({
+userId,
+metaBusinessId: business_id,
+wabaId: waba_id,
+phoneNumberId: phone_number_id,
+displayPhoneNumber: display_phone_number,
+status: "CONNECTED",
+});
+
+
+res.json({ message: "WhatsApp connected", record });
+} catch (err) {
+console.error("❌ completeSignup error", err);
+res.status(500).json({ error: "Failed to save Meta connection" });
+}
+};
+
+// export const metaCallback = async (req, res) => {
+//   try {
+//     const { code } = req.query;
+//     const userId = req.user.id; // from auth middleware
+
+//     const accessToken = await exchangeCodeForToken(code);
+//     const businessId = await getBusinessId(accessToken);
+//     const wabaId = await getWabaId(businessId, accessToken);
+//     const phoneNumberId = await getPhoneNumberId(wabaId, accessToken);
+
+//     await MetaConnection.create({
+//       userId,
+//       metaBusinessId: businessId,
+//       wabaId,
+//       phoneNumberId,
+//       accessToken,
+//       tokenType: "SYSTEM_USER",
+//       status: "CONNECTED",
+//     });
+
+//     res.redirect("/dashboard?whatsapp=connected");
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ error: "Meta connection failed" });
+//   }
+// };
+
+
+// export const saveSystemUserToken = async (req, res) => {
+//   const {
+//     metaBusinessId,
+//     wabaId,
+//     phoneNumberId,
+//     systemUserToken
+//   } = req.body;
+
+//   const userId = req.user.id;
+
+//   await MetaConnection.create({
+//     userId,
+//     metaBusinessId,
+//     wabaId,
+//     phoneNumberId,
+//     accessToken: systemUserToken,
+//     tokenType: "SYSTEM_USER",
+//     status: "CONNECTED"
+//   });
+
+//   res.json({ message: "WhatsApp connected successfully" });
+// };
