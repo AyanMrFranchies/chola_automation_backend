@@ -1,9 +1,9 @@
-// import {
-//   exchangeCodeForToken,
-//   getBusinessId,
-//   getWabaId,
-//   getPhoneNumberId,
-// } from "../../services/metaServices/meta_services.js";
+import {
+  exchangeCodeForToken,
+  getBusinessId,
+  getWabaId,
+  getPhoneNumberId,
+} from "../../services/metaServices/meta_services.js";
 import MetaConnection from "../../model/metaModels/meta_connection.js";
 
 
@@ -44,53 +44,71 @@ res.status(500).json({ error: "Failed to save Meta connection" });
 }
 };
 
-// export const metaCallback = async (req, res) => {
-//   try {
-//     const { code } = req.query;
-//     const userId = req.user.id; // from auth middleware
+export const metaCallback = async (req, res) => {
+  try {
+    const { code } = req.query;
+    const userId = req.user.id; // from auth middleware
+    const mode = req.query["hub.mode"];
+  const token = req.query["hub.verify_token"];
+  const challenge = req.query["hub.challenge"];
 
-//     const accessToken = await exchangeCodeForToken(code);
-//     const businessId = await getBusinessId(accessToken);
-//     const wabaId = await getWabaId(businessId, accessToken);
-//     const phoneNumberId = await getPhoneNumberId(wabaId, accessToken);
+  if (mode === "subscribe" && token === "verify_token_123") {
+    console.log("Webhook verified!");
+    res.status(200).send(challenge);
+  } else {
+    res.status(403).send("Verification failed");
+  }
 
-//     await MetaConnection.create({
-//       userId,
-//       metaBusinessId: businessId,
-//       wabaId,
-//       phoneNumberId,
-//       accessToken,
-//       tokenType: "SYSTEM_USER",
-//       status: "CONNECTED",
-//     });
-
-//     res.redirect("/dashboard?whatsapp=connected");
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).json({ error: "Meta connection failed" });
-//   }
-// };
+    console.log("Meta callback received code:", code);
+    if (!code){
+        return res.status(400).json({ error: "Authorization code missing" });
+    }
 
 
-// export const saveSystemUserToken = async (req, res) => {
-//   const {
-//     metaBusinessId,
-//     wabaId,
-//     phoneNumberId,
-//     systemUserToken
-//   } = req.body;
+    return res.status(200).json({ message: "Meta callback processed successfully" });
 
-//   const userId = req.user.id;
+    const accessToken = await exchangeCodeForToken(code);
+    const businessId = await getBusinessId(accessToken);
+    const wabaId = await getWabaId(businessId, accessToken);
+    const phoneNumberId = await getPhoneNumberId(wabaId, accessToken);
 
-//   await MetaConnection.create({
-//     userId,
-//     metaBusinessId,
-//     wabaId,
-//     phoneNumberId,
-//     accessToken: systemUserToken,
-//     tokenType: "SYSTEM_USER",
-//     status: "CONNECTED"
-//   });
+    await MetaConnection.create({
+      userId,
+      metaBusinessId: businessId,
+      wabaId,
+      phoneNumberId,
+      accessToken,
+      tokenType: "SYSTEM_USER",
+      status: "CONNECTED",
+    });
 
-//   res.json({ message: "WhatsApp connected successfully" });
-// };
+    res.redirect("/dashboard?whatsapp=connected");
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Meta connection failed" });
+  }
+};
+
+
+export const saveSystemUserToken = async (req, res) => {
+  const {
+    metaBusinessId,
+    wabaId,
+    phoneNumberId,
+    systemUserToken
+  } = req.body;
+
+  const userId = req.user.id;
+
+  await MetaConnection.create({
+    userId,
+    metaBusinessId,
+    wabaId,
+    phoneNumberId,
+    accessToken: systemUserToken,
+    tokenType: "SYSTEM_USER",
+    status: "CONNECTED"
+  });
+
+  res.json({ message: "WhatsApp connected successfully" });
+};
