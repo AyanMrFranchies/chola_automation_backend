@@ -25,13 +25,14 @@ app.use((req, res, next) => {
 
 // ✅ Replace with your WhatsApp Phone Number ID and Access Token
 const PHONE_NUMBER_ID = "992700260585658";
-const ACCESS_TOKEN = "EAAMbMH1YgikBQSmQjC6r4GgBZB7j4OHVtFfD2GCbIrjznLYcrdPYpVhTbdZBv8vjq9VQw2jgeGoJD5UUgiwDVItRJRCyyCCpXKHriZCMkYBynpZA0bm91wFo5chvw0vV1eowmkHIDcBqP2vXy4zJ4hZCex5cLXwbHLe2o1SvLisj8tuKvdoVlFdK3Po7x3JqiRRddk7o9Y8f72PcHIPr0Hd8328bONGWBpLhERDmOvW1AEJqQgy7f2xI1agS3tgQaUNjG7oAoftSogjX5zFQDZCBD2";
+const ACCESS_TOKEN = "EAAMbMH1YgikBQgG0LmjogiEILAZC3eEbiJJCGOgIacO4ESTEmIJLTjrVphJZCL1V7ZApxd6r9JVXhkaOdSnyCI0MLnbefG275YabbuxZBk4OiGfPCg8DJ1tp89cQRsj5NtpZASijswlaXphEGrr0JLR7DztB22uZAK4VQRbwT5B8FSJWarTZA3z4xXQJZBYV5ZCcFXa7FyKOozaYPzwHKylG7Lh5vKfoUijOuFj0bVSVeB1JVQTHF4GQNZCtDt4UpTQVLeSQz1TCiad3cGd2Va20ZBkqfzn";
 
 
 // Send WhatsApp message (text or template)
 app.post("/api/send-whatsapp", async (req, res) => {
   const { to, type, message, templateName, templateParams } = req.body;
 
+  console.log("Request body:", req.body);
   if (!to) return res.status(400).json({ error: "'to' number is required" });
 
   let bodyPayload;
