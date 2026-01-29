@@ -7,7 +7,7 @@ import cookieParser from "cookie-parser";
 const app = express();
 
 app.use(cors({
-  origin: ["http://localhost:3000", "http://localhost:5173","https://eileen-slothful-stereochromatically.ngrok-free.dev"],
+  origin: ["http://localhost:3000", "http://localhost:5173","https://eileen-slothful-stereochromatically.ngrok-free.dev","https://cholabiz.web.app"],
   credentials: true
 }))
 app.use(express.json());
@@ -25,7 +25,7 @@ app.use((req, res, next) => {
 
 // ✅ Replace with your WhatsApp Phone Number ID and Access Token
 const PHONE_NUMBER_ID = "992700260585658";
-const ACCESS_TOKEN = "EAAMbMH1YgikBQgG0LmjogiEILAZC3eEbiJJCGOgIacO4ESTEmIJLTjrVphJZCL1V7ZApxd6r9JVXhkaOdSnyCI0MLnbefG275YabbuxZBk4OiGfPCg8DJ1tp89cQRsj5NtpZASijswlaXphEGrr0JLR7DztB22uZAK4VQRbwT5B8FSJWarTZA3z4xXQJZBYV5ZCcFXa7FyKOozaYPzwHKylG7Lh5vKfoUijOuFj0bVSVeB1JVQTHF4GQNZCtDt4UpTQVLeSQz1TCiad3cGd2Va20ZBkqfzn";
+const ACCESS_TOKEN = "EAAMbMH1YgikBQqy9kWxfMAG9msKAyvkcrfiPK33CoSw3CbiwjDvxHvFlikELy9wogmbAux0cLINg3Grz3r0moCpkCFExcxrmfBYwvDQCeJG2vZCe3oCw0ZCyXTpBVRMJ4G3PFRwhfoARgoZBskTTQN6b9tf3efnI1pGAZCPPAzdRSVPBxRZCRRxkvF497bgpUcte5FqyJKSKFc1p3SEMQMd7pTFV8SdIHBffOGC7bSlJUgyPl9cG1jx41bieXW3HYRrWG9d8569kqFuPsvY196Wsp"
 
 
 // Send WhatsApp message (text or template)
@@ -86,6 +86,67 @@ app.post("/api/send-whatsapp", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });
+  }
+});
+
+
+const BUSINESS_ID = '726772596855839';
+app.get('/check-whatsapp-status', async (req, res) => {
+  try {
+    // Step 1: Fetch owned WhatsApp Business Accounts
+    const wabaRes = await axios.get(
+      `https://graph.facebook.com/v19.0/${BUSINESS_ID}/owned_whatsapp_business_accounts?access_token=${ACCESS_TOKEN}`
+    );
+
+    if (wabaRes.data.data.length === 0) {
+      return res.json({ status: 'NOT_CONNECTED' });
+    }
+
+    const waba = wabaRes.data.data[0];
+    const WABA_ID = waba.id;
+
+    // Step 2: Fetch phone numbers under WABA
+    const phoneRes = await axios.get(
+      `https://graph.facebook.com/v19.0/${WABA_ID}/phone_numbers?access_token=${ACCESS_TOKEN}`
+    );
+
+    if (phoneRes.data.data.length === 0) {
+      return res.json({ status: 'CONNECTED_NO_PHONE' });
+    }
+
+    const phoneNumberId = phoneRes.data.data[0].id;
+    res.json({
+      status: 'CONNECTED',
+      wabaId: WABA_ID,
+      phoneNumberId,
+    });
+  } catch (err) {
+    console.error(err.response?.data || err.message);
+    res.status(500).json({ status: 'ERROR', error: err.message });
+  }
+});
+
+
+app.post('/send-message', async (req, res) => {
+  const { phoneNumberId, to, message } = req.body;
+
+  try {
+    const response = await axios.post(
+      `https://graph.facebook.com/v19.0/${phoneNumberId}/messages`,
+      {
+        messaging_product: 'whatsapp',
+        to,
+        text: { body: message },
+      },
+      {
+        headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
+      }
+    );
+
+    res.json(response.data);
+  } catch (err) {
+    console.error(err.response?.data || err.message);
+    res.status(500).json({ status: 'ERROR', error: err.message });
   }
 });
 
